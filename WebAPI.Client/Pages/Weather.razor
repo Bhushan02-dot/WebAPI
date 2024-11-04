@@ -1,0 +1,123 @@
+﻿
+ @page "/weather"
+<PageTitle>Weather</PageTitle>
+
+<h1>Weather</h1>
+
+<p>This component demonstrates showing weather data based on city selection.</p>
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.5rem" class="rz-p-sm-12">
+    <RadzenLabel Text="Select City" Component="DropDownBindValue" />
+    <RadzenDropDown @bind-Value=@selectedCity Data=@cityName TValue="DropdownItem" TextProperty="city" Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
+    <RadzenButton Text="Get Weather" ButtonStyle="ButtonStyle.Primary" Click="GetWeatherAsync" />
+</RadzenStack>
+
+@if (weatherDataList != null && weatherDataList.Any())
+{
+    <RadzenDataGrid class="rz-border-primary-dark" AllowFiltering="true" AllowSorting="true" PageSize="5" AllowPaging="true" Data="@weatherDataList">
+        <Columns>
+            <RadzenDataGridColumn Property="City" Title="City" Width="160px" />
+            <RadzenDataGridColumn Property="Temperature" Title="Temperature (°C)" Width="160px" />
+            <RadzenDataGridColumn Property="Description" Title="Weather Description" Width="300px" />
+        </Columns>
+    </RadzenDataGrid>
+}
+else if (isLoading)
+{
+    <p>Loading weather data...</p>
+}
+@code {
+    // Models for dropdown and weather data
+    public class DropdownItem
+    {
+        public string? city { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+    }
+
+    public class WeatherData
+    {
+        public string? City { get; set; } = string.Empty;
+        public double Temperature { get; set; }
+        public string Description { get; set; } = string.Empty;
+    }
+
+    // City Dropdown Options
+    public List<DropdownItem> cityName = new List<DropdownItem>
+    {
+        new DropdownItem { city = "Nashik", Latitude = 20.011, Longitude = 73.790 },
+        new DropdownItem { city = "Pune", Latitude = 18.520, Longitude = 73.856 },
+        new DropdownItem { city = "Mumbai", Latitude = 19.076, Longitude = 72.877 },
+        new DropdownItem { city = "Manmad", Latitude = 20.250, Longitude = 74.450 }
+    };
+
+    // Selected city and weather data
+    public DropdownItem? selectedCity { get; set; }
+    public List<WeatherData>? weatherDataList { get; set; } = new List<WeatherData>();
+    public bool isLoading { get; set; } = false;
+
+    // Inject HttpClient for API call
+    [Inject] HttpClient Http { get; set; } = default!;
+
+    // Set default city (if you want to show something by default, you can keep this line)
+    protected override void OnInitialized()
+    {
+        selectedCity = cityName.FirstOrDefault();
+    }
+
+    // Method to fetch weather data asynchronously
+    public async Task GetWeatherAsync()
+    {
+        if (selectedCity == null)
+        {
+            return;
+        }
+
+        isLoading = true;
+        weatherDataList?.Clear(); /*  Clear previous data */
+
+        try
+        {
+            var url = $"https://api.openweathermap.org/data/2.5/weather?lat={selectedCity.Latitude}&lon={selectedCity.Longitude}&appid=7fae6ca41616b6453a457fff4d6e7e49&units=metric";
+
+            var response = await Http.GetFromJsonAsync<OpenWeatherResponse>(url);
+            Console.WriteLine(response);
+            if (response != null)
+            {
+                var weather = new WeatherData
+                    {
+                        City = selectedCity.city,  // Ensure the selected city's name is shown
+                        Temperature = response.Main.Temp,
+   
+                        Description = response.Weather.FirstOrDefault()?.Description ?? "No description"
+                    };
+
+                weatherDataList.Add(weather);  // Add only the selected city's weather data
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching weather data: {ex.Message}");
+        }
+
+        isLoading = false;
+    }
+
+    // Classes to parse API response
+    public class OpenWeatherResponse
+    {
+        public MainWeatherData Main { get; set; } = default!;
+        public List<WeatherCondition> Weather { get; set; } = new List<WeatherCondition>();
+    }
+
+    public class MainWeatherData
+    {
+        public double Temp { get; set; }
+    }
+
+    public class WeatherCondition
+    {
+        public string? Description { get; set; }
+    }
+}
+

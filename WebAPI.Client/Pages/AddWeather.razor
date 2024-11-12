@@ -110,7 +110,9 @@ else if (isLoading)
             var url = $"https://api.openweathermap.org/data/2.5/weather?lat={selectedCity.Latitude}&lon={selectedCity.Longitude}&appid=7fae6ca41616b6453a457fff4d6e7e49&units=metric";
 
             var response = await Http.GetFromJsonAsync<OpenWeatherResponse>(url);
-            if (response != null)
+            var check = "https://api.openweathermap.org/data/2.5/weather?q=Nashik&appid=7fae6ca41616b6453a457fff4d6e7e49&units=metric";
+
+            var Demo = await Http.GetFromJsonAsync<OpenWeatherResponse>(check);
             {
                 var weather = new WeatherData
                 {    

@@ -5,7 +5,7 @@
 namespace WebAPI.Migrations.WeatherDBMigrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class weather : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -8,12 +8,8 @@ namespace WebAPI.Client.Models
         [Key]
         public int WeatherId { get; set; }
 
-        // Foreign Key for WeatherCity
         [ForeignKey("WeatherCity")]
-        public int Id { get; set; }  // This is the foreign key column
-
-        // Navigation property (optional)
-
+        public int Id { get; set; } 
 
         public float Temp { get; set; }
         public int Humidity { get; set; }

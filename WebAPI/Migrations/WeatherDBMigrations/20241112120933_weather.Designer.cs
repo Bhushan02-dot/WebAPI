@@ -9,8 +9,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace WebAPI.Migrations.WeatherDBMigrations
 {
     [DbContext(typeof(WeatherDB))]
-    [Migration("20241111111447_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20241112120933_weather")]
+    partial class weather
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -18,7 +18,7 @@ namespace WebAPI.Migrations.WeatherDBMigrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
 
-            modelBuilder.Entity("WebAPI.Client.Models.WeatherData", b =>
+            modelBuilder.Entity("WebAPI.Client.Models.Weather", b =>
                 {
                     b.Property<int>("WeatherId")
                         .ValueGeneratedOnAdd()

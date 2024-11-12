@@ -15,7 +15,7 @@ namespace WebAPI.Migrations.WeatherDBMigrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
 
-            modelBuilder.Entity("WebAPI.Client.Models.WeatherData", b =>
+            modelBuilder.Entity("WebAPI.Client.Models.Weather", b =>
                 {
                     b.Property<int>("WeatherId")
                         .ValueGeneratedOnAdd()

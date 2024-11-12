@@ -1,5 +1,4 @@
-﻿
- @page "/weather"
+﻿@page "/weather"
 <PageTitle>Weather</PageTitle>
 
 <h1>Weather</h1>
@@ -18,7 +17,9 @@
         <Columns>
             <RadzenDataGridColumn Property="City" Title="City" Width="160px" />
             <RadzenDataGridColumn Property="Temperature" Title="Temperature (°C)" Width="160px" />
+            <RadzenDataGridColumn Property="Humidity" Title="Humidity (%)" Width="160px" />
             <RadzenDataGridColumn Property="Description" Title="Weather Description" Width="300px" />
+
         </Columns>
     </RadzenDataGrid>
 }
@@ -26,8 +27,8 @@ else if (isLoading)
 {
     <p>Loading weather data...</p>
 }
+
 @code {
-    // Models for dropdown and weather data
     public class DropdownItem
     {
         public string? city { get; set; }
@@ -40,9 +41,10 @@ else if (isLoading)
         public string? City { get; set; } = string.Empty;
         public double Temperature { get; set; }
         public string Description { get; set; } = string.Empty;
+        public string Main { get; set; } = string.Empty;
+        public double Humidity { get; set; } 
     }
 
-    // City Dropdown Options
     public List<DropdownItem> cityName = new List<DropdownItem>
     {
         new DropdownItem { city = "Nashik", Latitude = 20.011, Longitude = 73.790 },
@@ -51,21 +53,17 @@ else if (isLoading)
         new DropdownItem { city = "Manmad", Latitude = 20.250, Longitude = 74.450 }
     };
 
-    // Selected city and weather data
     public DropdownItem? selectedCity { get; set; }
     public List<WeatherData>? weatherDataList { get; set; } = new List<WeatherData>();
     public bool isLoading { get; set; } = false;
 
-    // Inject HttpClient for API call
     [Inject] HttpClient Http { get; set; } = default!;
 
-    // Set default city (if you want to show something by default, you can keep this line)
     protected override void OnInitialized()
     {
         selectedCity = cityName.FirstOrDefault();
     }
 
-    // Method to fetch weather data asynchronously
     public async Task GetWeatherAsync()
     {
         if (selectedCity == null)
@@ -74,7 +72,7 @@ else if (isLoading)
         }
 
         isLoading = true;
-        weatherDataList?.Clear(); /*  Clear previous data */
+        weatherDataList?.Clear(); 
 
         try
         {
@@ -85,14 +83,15 @@ else if (isLoading)
             if (response != null)
             {
                 var weather = new WeatherData
-                    {
-                        City = selectedCity.city,  // Ensure the selected city's name is shown
-                        Temperature = response.Main.Temp,
-   
-                        Description = response.Weather.FirstOrDefault()?.Description ?? "No description"
-                    };
+                {
+                    City = selectedCity.city,  
+                    Temperature = response.Main.Temp,
+                    Description = response.Weather.FirstOrDefault()?.Description ?? "No description",
+                    Main = response.Weather.FirstOrDefault()?.Main?? "No description",
+                    Humidity = response.Main.Humidity
+                };
 
-                weatherDataList.Add(weather);  // Add only the selected city's weather data
+                weatherDataList.Add(weather); 
             }
         }
         catch (Exception ex)
@@ -103,7 +102,6 @@ else if (isLoading)
         isLoading = false;
     }
 
-    // Classes to parse API response
     public class OpenWeatherResponse
     {
         public MainWeatherData Main { get; set; } = default!;
@@ -113,11 +111,12 @@ else if (isLoading)
     public class MainWeatherData
     {
         public double Temp { get; set; }
+        public double Humidity { get; set; } 
     }
 
     public class WeatherCondition
     {
         public string? Description { get; set; }
+        public string? Main { get; set; }
     }
 }
-

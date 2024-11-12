@@ -1,22 +1,170 @@
-﻿@page "/addWeather"
+﻿
+ @page "/addWeather"
+<PageTitle>Weather</PageTitle>
 
-<h3>AddWeather</h3>
+<h1>Weather</h1>
 
-@inherits WebAPIContext
+<p>This component demonstrates showing weather data based on city selection.</p>
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.5rem" class="rz-p-sm-12">
-    <RadzenLabel Text="Select Value" Component="DropDownBindValue" />
-    <RadzenDropDown @bind-Value=@value Data=@companyNames Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
+    <RadzenLabel Text="Select City" Component="DropDownBindValue" />
+    <RadzenDropDown @bind-Value="selectedCity" Data="cityList" TValue="WeatherCity" TextProperty="cityName" Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
+    <RadzenButton Text="Get Weather" ButtonStyle="ButtonStyle.Primary" Click="GetWeatherAsync" />
+    <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Success" Click="SaveWeatherAsync" />
 </RadzenStack>
 
+@if (weatherDataList != null && weatherDataList.Any())
+{
+    <RadzenDataGrid class="rz-border-primary-dark" AllowFiltering="true" AllowSorting="true" PageSize="5" AllowPaging="true" Data="@weatherDataList">
+        <Columns>
+            <RadzenDataGridColumn Property="City" Title="City" Width="160px" />
+            <RadzenDataGridColumn Property="Temp" Title="Temperature (°C)" Width="160px" />
+            <RadzenDataGridColumn Property="Humidity" Title="Humidity (%)" Width="160px" />
+            <RadzenDataGridColumn Property="Description" Title="Weather Description" Width="300px" />
+        </Columns>
+    </RadzenDataGrid>
+
+  }
+else if (isLoading)
+{
+    <p>Loading weather data...</p>
+}
+
 @code {
-    string value = "Nashik";
-    IEnumerable<string> companyNames;
+    public class WeatherCity
+    {
+        public int Id { get; set; }
+        public string cityName { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+    }
+
+    public class WeatherData
+    {   
+        public string City { get; set; }
+        public float Temp { get; set; }
+        public string Description { get; set; }
+        public int Humidity { get; set; }
+    }
+
+    public class WeatherDB
+    {
+        public int Id { get; set; }
+        public float Temp { get; set; }
+        public string Description { get; set; }
+        public int Humidity { get; set; }
+    }
+    public class OpenWeatherResponse
+    {
+        public MainWeatherData Main { get; set; }
+        public List<WeatherCondition> Weather { get; set; }
+    }
+    public class MainWeatherData
+    {
+        public float Temp { get; set; }
+        public int Humidity { get; set; }
+    }
+
+    public class WeatherCondition
+    {
+        public string Description { get; set; }
+        public string Main { get; set; }
+    }
+
+    public List<WeatherCity> cityList = new List<WeatherCity>();
+    public WeatherCity? selectedCity { get; set; }
+    public List<WeatherData>? weatherDataList { get; set; } = new List<WeatherData>();
+    public bool isLoading { get; set; } = false;
+
+    [Inject] HttpClient Http { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
+        try
+        {
+            cityList = await Http.GetFromJsonAsync<List<WeatherCity>>("api/WeatherCities");
 
-        companyNames = WebAPIContext.City.Select(c => c.cityName).Distinct();
+            if (cityList != null && cityList.Any())
+            {
+                selectedCity = cityList.First();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching cities: {ex.Message}");
+        }
     }
+
+    public async Task GetWeatherAsync()
+    {
+        if (selectedCity == null)
+        {
+            return;
+        }
+
+        isLoading = true;
+        weatherDataList?.Clear();
+
+        try
+        {
+            var url = $"https://api.openweathermap.org/data/2.5/weather?lat={selectedCity.Latitude}&lon={selectedCity.Longitude}&appid=7fae6ca41616b6453a457fff4d6e7e49&units=metric";
+
+            var response = await Http.GetFromJsonAsync<OpenWeatherResponse>(url);
+            if (response != null)
+            {
+                var weather = new WeatherData
+                {    
+                    City = selectedCity.cityName,
+                    Temp = response.Main.Temp,
+                    Description = response.Weather.FirstOrDefault()?.Description ?? "No description",
+                    Humidity = response.Main.Humidity
+                };
+
+                weatherDataList.Add(weather);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching weather data: {ex.Message}");
+        }
+
+        isLoading = false;
+    }
+
+    public async Task SaveWeatherAsync()
+    {
+        if (weatherDataList == null || !weatherDataList.Any())
+        {
+            return;
+        }
+
+        try
+        {
+  
+            foreach (var weather in weatherDataList)
+            {
+                var postResponse = await Http.PostAsJsonAsync("api/WeatherDatas", new WeatherDB
+                    {
+                        Id = selectedCity.Id,
+                        Temp = weather.Temp,
+                        Description = weather.Description,
+                        Humidity = weather.Humidity
+                    });
+
+                if (postResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Weather data for {weather.City} saved successfully.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error saving weather data for {weather.City}.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
 }

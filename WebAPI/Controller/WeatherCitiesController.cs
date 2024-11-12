@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using City;
+using Weather;
 using WebAPI.Client.Models;
 
 namespace WebAPI.Controller
@@ -14,25 +14,25 @@ namespace WebAPI.Controller
     [ApiController]
     public class WeatherCitiesController : ControllerBase
     {
-        private readonly WebAPIContext _context;
+        private readonly ebAPIContext _context;
 
-        public WeatherCitiesController(WebAPIContext context)
+        public WeatherCitiesController(ebAPIContext context)
         {
             _context = context;
         }
 
         // GET: api/WeatherCities
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<WeatherCity>>> GetCity()
+        public async Task<ActionResult<IEnumerable<City>>> GetWeatherCity()
         {
-            return await _context.City.ToListAsync();
+            return await _context.WeatherCity.ToListAsync();
         }
 
         // GET: api/WeatherCities/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<WeatherCity>> GetWeatherCity(int id)
+        public async Task<ActionResult<City>> GetWeatherCity(int id)
         {
-            var weatherCity = await _context.City.FindAsync(id);
+            var weatherCity = await _context.WeatherCity.FindAsync(id);
 
             if (weatherCity == null)
             {
@@ -45,7 +45,7 @@ namespace WebAPI.Controller
         // PUT: api/WeatherCities/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutWeatherCity(int id, WeatherCity weatherCity)
+        public async Task<IActionResult> PutWeatherCity(int id, City weatherCity)
         {
             if (id != weatherCity.Id)
             {
@@ -76,9 +76,9 @@ namespace WebAPI.Controller
         // POST: api/WeatherCities
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<WeatherCity>> PostWeatherCity(WeatherCity weatherCity)
+        public async Task<ActionResult<City>> PostWeatherCity(City weatherCity)
         {
-            _context.City.Add(weatherCity);
+            _context.WeatherCity.Add(weatherCity);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetWeatherCity", new { id = weatherCity.Id }, weatherCity);
@@ -88,13 +88,13 @@ namespace WebAPI.Controller
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteWeatherCity(int id)
         {
-            var weatherCity = await _context.City.FindAsync(id);
+            var weatherCity = await _context.WeatherCity.FindAsync(id);
             if (weatherCity == null)
             {
                 return NotFound();
             }
 
-            _context.City.Remove(weatherCity);
+            _context.WeatherCity.Remove(weatherCity);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -102,7 +102,7 @@ namespace WebAPI.Controller
 
         private bool WeatherCityExists(int id)
         {
-            return _context.City.Any(e => e.Id == id);
+            return _context.WeatherCity.Any(e => e.Id == id);
         }
     }
 }

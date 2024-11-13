@@ -10,7 +10,7 @@ namespace WebAPI.Client.Models
 
         [ForeignKey("WeatherCity")]
         public int Id { get; set; } 
-
+        public string City { get; set; }
         public float Temp { get; set; }
         public int Humidity { get; set; }
         public string Description { get; set; }

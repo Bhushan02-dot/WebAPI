@@ -5,7 +5,7 @@
 namespace WebAPI.Migrations.WeatherDBMigrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class WeatherData : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,6 +17,7 @@ namespace WebAPI.Migrations.WeatherDBMigrations
                     WeatherId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Id = table.Column<int>(type: "INTEGER", nullable: false),
+                    City = table.Column<string>(type: "TEXT", nullable: false),
                     Temp = table.Column<float>(type: "REAL", nullable: false),
                     Humidity = table.Column<int>(type: "INTEGER", nullable: false),
                     Description = table.Column<string>(type: "TEXT", nullable: false)

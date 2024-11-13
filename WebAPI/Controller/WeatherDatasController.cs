@@ -40,6 +40,22 @@ namespace WebAPI.Controller
 
             return weatherData;
         }
+        // Controller method to get weather data for a specific city
+        [HttpGet("city/{id}")]
+        public async Task<ActionResult<List<Client.Models.Weather>>> GetWeatherDataByCity(int id)
+        {
+            var weatherData = await _context.WeatherData
+                .Where(w => w.Id == id) // Filter by city ID
+                .ToListAsync();
+
+            if (weatherData == null || !weatherData.Any())
+            {
+                return NotFound();
+            }
+
+            return weatherData;
+        }
+
 
         // PUT: api/WeatherDatas/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

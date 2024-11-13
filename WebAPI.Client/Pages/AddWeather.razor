@@ -1,5 +1,6 @@
-﻿
+﻿@* 
  @page "/addWeather"
+ @using WebAPI.Client.Models
 <PageTitle>Weather</PageTitle>
 
 <h1>Weather</h1>
@@ -8,7 +9,7 @@
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.5rem" class="rz-p-sm-12">
     <RadzenLabel Text="Select City" Component="DropDownBindValue" />
-    <RadzenDropDown @bind-Value="selectedCity" Data="cityList" TValue="WeatherCity" TextProperty="cityName" Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
+    <RadzenDropDown @bind-Value="selectedCity" Data="cityList" TValue="City" TextProperty="cityName" Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" />
     <RadzenButton Text="Get Weather" ButtonStyle="ButtonStyle.Primary" Click="GetWeatherAsync" />
     <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Success" Click="SaveWeatherAsync" />
 </RadzenStack>
@@ -31,14 +32,7 @@ else if (isLoading)
 }
 
 @code {
-    public class WeatherCity
-    {
-        public int Id { get; set; }
-        public string cityName { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-    }
-
+   
     public class WeatherData
     {   
         public string City { get; set; }
@@ -71,8 +65,8 @@ else if (isLoading)
         public string Main { get; set; }
     }
 
-    public List<WeatherCity> cityList = new List<WeatherCity>();
-    public WeatherCity? selectedCity { get; set; }
+    public List<City> cityList = new List<City>();
+    public City? selectedCity { get; set; }
     public List<WeatherData>? weatherDataList { get; set; } = new List<WeatherData>();
     public bool isLoading { get; set; } = false;
 
@@ -82,7 +76,7 @@ else if (isLoading)
     {
         try
         {
-            cityList = await Http.GetFromJsonAsync<List<WeatherCity>>("api/WeatherCities");
+            cityList = await Http.GetFromJsonAsync<List<City>>("api/WeatherCities");
 
             if (cityList != null && cityList.Any())
             {
@@ -107,10 +101,12 @@ else if (isLoading)
 
         try
         {
-            var url = $"https://api.openweathermap.org/data/2.5/weather?lat={selectedCity.Latitude}&lon={selectedCity.Longitude}&appid=7fae6ca41616b6453a457fff4d6e7e49&units=metric";
+            var url = $"https://api.openweathermap.org/data/2.5/weather?lat={selectedCity.latitude}&lon={selectedCity.longitude}&appid=7fae6ca41616b6453a457fff4d6e7e49&units=metric";
 
             var response = await Http.GetFromJsonAsync<OpenWeatherResponse>(url);
-            if (response != null)
+            var check = "https://api.openweathermap.org/data/2.5/weather?q=Nashik&appid=7fae6ca41616b6453a457fff4d6e7e49&units=metric";
+
+            var Demo = await Http.GetFromJsonAsync<OpenWeatherResponse>(check);
             {
                 var weather = new WeatherData
                 {    
@@ -167,4 +163,399 @@ else if (isLoading)
         }
     }
 
+}
+*@
+@* @page "/addWeather"
+@using WebAPI.Client.Models
+<PageTitle>Weather</PageTitle>
+
+<h1>Weather</h1>
+
+<p>This component demonstrates showing weather data based on city selection.</p>
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.5rem" class="rz-p-sm-12">
+    <RadzenLabel Text="Select City" Component="DropDownBindValue" />
+    <RadzenDropDown @bind-Value="selectedCity" Data="cityList" TValue="City" TextProperty="cityName"
+                    Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" Change="OnCityChanged" />
+
+    <RadzenButton Text="Get Weather" ButtonStyle="ButtonStyle.Primary" Click="GetWeatherAsync" />
+    <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Success" Click="SaveWeatherAsync" />
+</RadzenStack>
+
+@if (weatherDataList != null && weatherDataList.Any())
+{
+    <RadzenDataGrid class="rz-border-primary-dark" AllowFiltering="true" AllowSorting="true" PageSize="5" AllowPaging="true" Data="@weatherDataList">
+        <Columns>
+            <RadzenDataGridColumn Property="City" Title="City" Width="160px" />
+            <RadzenDataGridColumn Property="Temp" Title="Temperature (°C)" Width="160px" />
+            <RadzenDataGridColumn Property="Humidity" Title="Humidity (%)" Width="160px" />
+            <RadzenDataGridColumn Property="Description" Title="Weather Description" Width="300px" />
+        </Columns>
+    </RadzenDataGrid>
+}
+else if (isLoading)
+{
+    <p>Loading weather data...</p>
+}
+
+@code {
+    public class WeatherData
+    {
+        public string City { get; set; }
+        public float Temp { get; set; }
+        public string Description { get; set; }
+        public int Humidity { get; set; }
+    }
+    public class WeatherDB
+    {
+        public int Id { get; set; }
+        public float Temp { get; set; }
+        public string Description { get; set; }
+        public int Humidity { get; set; }
+    }
+
+    public class OpenWeatherResponse
+    {
+        public MainWeatherData Main { get; set; }
+        public List<WeatherCondition> Weather { get; set; }
+    }
+    public class MainWeatherData
+    {
+        public float Temp { get; set; }
+        public int Humidity { get; set; }
+    }
+
+    public class WeatherCondition
+    {
+        public string Description { get; set; }
+        public string Main { get; set; }
+    }
+
+
+    public List<City> cityList = new List<City>();
+    public City? selectedCity { get; set; }
+    public List<WeatherData>? weatherDataList { get; set; } = new List<WeatherData>();
+    public bool isLoading { get; set; } = false;
+
+    [Inject] HttpClient Http { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            cityList = await Http.GetFromJsonAsync<List<City>>("api/WeatherCities");
+
+            if (cityList != null && cityList.Any())
+            {
+                selectedCity = cityList.First();
+                await FetchWeatherDataForCityAsync(selectedCity.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching cities: {ex.Message}");
+        }
+    }
+
+    // Triggered when the dropdown value changes
+    private async Task OnCityChanged(object value)
+    {
+        if (value is City city)
+        {
+            selectedCity = city;
+            await FetchWeatherDataForCityAsync(city.Id);
+        }
+    }
+
+    // Fetch weather data for a specific city from the database
+    private async Task FetchWeatherDataForCityAsync(int cityId)
+    {
+        isLoading = true;
+        weatherDataList?.Clear();
+
+        try
+        {
+            var weatherData = await Http.GetFromJsonAsync<List<WeatherData>>($"api/WeatherDatas/city/{cityId}");
+
+            if (weatherData != null && weatherData.Any())
+            {
+                weatherDataList = weatherData;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching weather data from database: {ex.Message}");
+        }
+
+        isLoading = false;
+    }
+
+    // Get weather data from OpenWeather API
+    public async Task GetWeatherAsync()
+    {
+        if (selectedCity == null)
+        {
+            return;
+        }
+
+        isLoading = true;
+
+        try
+        {
+            var url = $"https://api.openweathermap.org/data/2.5/weather?lat={selectedCity.latitude}&lon={selectedCity.longitude}&appid=7fae6ca41616b6453a457fff4d6e7e49&units=metric";
+            var response = await Http.GetFromJsonAsync<OpenWeatherResponse>(url);
+
+            var weather = new WeatherData
+                {
+                    City = selectedCity.cityName,
+                    Temp = response.Main.Temp,
+                    Description = response.Weather.FirstOrDefault()?.Description ?? "No description",
+                    Humidity = response.Main.Humidity
+                };
+
+            // Optionally add this data to the grid directly or update as needed
+            weatherDataList?.Add(weather);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching weather data from OpenWeather: {ex.Message}");
+        }
+
+        isLoading = false;
+    }
+
+    // Save the current weather data to the database
+    public async Task SaveWeatherAsync()
+    {
+        if (weatherDataList == null || !weatherDataList.Any())
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (var weather in weatherDataList)
+            {
+                var postResponse = await Http.PostAsJsonAsync("api/WeatherDatas", new WeatherDB
+                    {
+                        Id = selectedCity.Id, // Assuming this is the foreign key for city
+                        Temp = weather.Temp,
+                        Description = weather.Description,
+                        Humidity = weather.Humidity
+                    });
+
+                if (postResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Weather data for {weather.City} saved successfully.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error saving weather data for {weather.City}.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving weather data: {ex.Message}");
+        }
+    }
+} *@
+@page "/addWeather"
+@using WebAPI.Client.Models
+<PageTitle>Weather</PageTitle>
+
+<h1>Weather</h1>
+
+<p>This component demonstrates showing weather data based on city selection.</p>
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.5rem" class="rz-p-sm-12">
+    <RadzenLabel Text="Select City" Component="DropDownBindValue" />
+    <RadzenDropDown @bind-Value="selectedCity" Data="cityList" TValue="City" TextProperty="cityName"
+                    Style="width: 100%; max-width: 400px;" Name="DropDownBindValue" Change="OnCityChanged" />
+
+    <RadzenButton Text="Get Weather" ButtonStyle="ButtonStyle.Primary" Click="GetWeatherAsync" />
+    <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Success" Click="SaveWeatherAsync" />
+</RadzenStack>
+
+@if (weatherDataList != null && weatherDataList.Any())
+{
+    <RadzenDataGrid class="rz-border-primary-dark" AllowFiltering="true" AllowSorting="true" PageSize="5" AllowPaging="true" Data="@weatherDataList">
+        <Columns>
+            <RadzenDataGridColumn Property="City" Title="City" Width="160px" />
+            <RadzenDataGridColumn Property="Temp" Title="Temperature (°C)" Width="160px" />
+            <RadzenDataGridColumn Property="Humidity" Title="Humidity (%)" Width="160px" />
+            <RadzenDataGridColumn Property="Description" Title="Weather Description" Width="300px" />
+        </Columns>
+    </RadzenDataGrid>
+}
+else if (isLoading)
+{
+    <p>Loading weather data...</p>
+}
+
+@code {
+    public class WeatherData
+    {
+        public string City { get; set; }
+        public float Temp { get; set; }
+        public string Description { get; set; }
+        public int Humidity { get; set; }
+    }
+    public class WeatherDB
+    {
+        public int Id { get; set; }
+        public string City { get; set;  }
+        public float Temp { get; set; }
+        public string Description { get; set; }
+        public int Humidity { get; set; }
+    }
+    public class OpenWeatherResponse
+    {
+        public MainWeatherData Main { get; set; }
+        public List<WeatherCondition> Weather { get; set; }
+    }
+
+    public class MainWeatherData
+    {
+        public float Temp { get; set; }
+        public int Humidity { get; set; }
+    }
+
+    public class WeatherCondition
+    {
+        public string Description { get; set; }
+        public string Main { get; set; }
+    }
+
+    public List<City> cityList = new List<City>();
+    public City? selectedCity { get; set; }
+    public List<WeatherData>? weatherDataList { get; set; } = new List<WeatherData>();
+    public bool isLoading { get; set; } = false;
+
+    [Inject] HttpClient Http { get; set; } = default!;
+
+    // Fetch city list from the API on initialization
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            cityList = await Http.GetFromJsonAsync<List<City>>("api/WeatherCities");
+
+            if (cityList != null && cityList.Any())
+            {
+                selectedCity = cityList.First(); // Select the first city by default
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching cities: {ex.Message}");
+        }
+    }
+
+    // Triggered when the dropdown value changes
+    private async Task OnCityChanged(object value)
+    {
+        if (value is City city)
+        {
+            selectedCity = city;
+            await FetchWeatherFromDatabaseAsync();  // Fetch data from the database based on the selected city
+        }
+    }
+
+    // Fetch weather data from the database based on the selected city
+    private async Task FetchWeatherFromDatabaseAsync()
+    {
+        if (selectedCity == null)
+        {
+            return;
+        }
+
+        isLoading = true;
+
+        try
+        {
+            // Fetch weather data from the database for the selected city
+            var url = $"api/WeatherDatas/city/{selectedCity.Id}";
+            var response = await Http.GetFromJsonAsync<List<WeatherData>>(url);
+            weatherDataList = response ?? new List<WeatherData>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching weather data from database: {ex.Message}");
+        }
+
+        isLoading = false;
+    }
+
+    // Get weather data from OpenWeather API for the selected city
+    public async Task GetWeatherAsync()
+    {
+        if (selectedCity == null)
+        {
+            return;
+        }
+
+        isLoading = true;
+        weatherDataList?.Clear(); // Clear any previous weather data
+
+        try
+        {
+            // Use the latitude and longitude from the selected city to fetch weather data
+            var url = $"https://api.openweathermap.org/data/2.5/weather?lat={selectedCity.latitude}&lon={selectedCity.longitude}&appid=7fae6ca41616b6453a457fff4d6e7e49&units=metric";
+            var response = await Http.GetFromJsonAsync<OpenWeatherResponse>(url);
+
+            var weather = new WeatherData
+                {
+                    City = selectedCity.cityName,
+                    Temp = response.Main.Temp,
+                    Description = response.Weather.FirstOrDefault()?.Description ?? "No description",
+                    Humidity = response.Main.Humidity
+                };
+
+            weatherDataList?.Add(weather); // Add the new weather data to the list
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching weather data: {ex.Message}");
+        }
+
+        isLoading = false;
+    }
+
+    // Save the current weather data to the database
+    public async Task SaveWeatherAsync()
+    {
+        if (weatherDataList == null || !weatherDataList.Any())
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (var weather in weatherDataList)
+            {
+                var postResponse = await Http.PostAsJsonAsync("api/WeatherDatas", new WeatherDB
+                    {
+                        Id = selectedCity.Id, // Assuming this is the foreign key for the city
+                        City = selectedCity.cityName,
+                        Temp = weather.Temp,
+                        Description = weather.Description,
+                        Humidity = weather.Humidity
+                    });
+
+                if (postResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Weather data for {weather.City} saved successfully.");
+                }
+                else
+                {
+                    Console.WriteLine($"Error saving weather data for {weather.City}.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving weather data: {ex.Message}");
+        }
+    }
 }

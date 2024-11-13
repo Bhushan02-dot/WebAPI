@@ -3,14 +3,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Weather;
 
 #nullable disable
 
-namespace WebAPI.Migrations.WeatherDBMigrations
+namespace WebAPI.Migrations
 {
-    [DbContext(typeof(WeatherDB))]
-    [Migration("20241111111447_InitialCreate")]
-    partial class InitialCreate
+    [DbContext(typeof(ebAPIContext))]
+    [Migration("20241113065917_weatheCity")]
+    partial class weatheCity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -18,28 +19,25 @@ namespace WebAPI.Migrations.WeatherDBMigrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
 
-            modelBuilder.Entity("WebAPI.Client.Models.WeatherData", b =>
+            modelBuilder.Entity("WebAPI.Client.Models.City", b =>
                 {
-                    b.Property<int>("WeatherId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Description")
+                    b.Property<string>("cityName")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Humidity")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<float>("Temp")
+                    b.Property<double>("latitude")
                         .HasColumnType("REAL");
 
-                    b.HasKey("WeatherId");
+                    b.Property<double>("longitude")
+                        .HasColumnType("REAL");
 
-                    b.ToTable("WeatherData");
+                    b.HasKey("Id");
+
+                    b.ToTable("WeatherCity");
                 });
 #pragma warning restore 612, 618
         }

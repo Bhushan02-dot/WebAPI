@@ -1,52 +1,139 @@
-﻿@page "/city"
-@using WebAPI.Client.Models;
+﻿
+ @page "/city"
+@using WebAPI.Client.Models
 @inject HttpClient Http
 
-<h3>AddCity</h3>
+<h3>Add City</h3>
 
 <RadzenRow Gap="2rem" RowGap="2rem" class="rz-m-0 rz-m-md-12">
     <RadzenColumn Size="12" SizeMD="3">
         <RadzenCard>
-            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Default TextBox</RadzenText>
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">City Name</RadzenText>
             <RadzenTextBox Style="width: 100%" aria-label="City Name" @bind-Value="weatherData.cityName" />
         </RadzenCard>
     </RadzenColumn>
-     <RadzenColumn Size="12" SizeMD="3">
-        <RadzenCard>
-            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Default TextBox</RadzenText>
-            <RadzenNumeric Style="width: 100%" aria-label="lattitude" @bind-Value="weatherData.latitude" />
-        </RadzenCard>
-    </RadzenColumn>
+
     <RadzenColumn Size="12" SizeMD="3">
         <RadzenCard>
-            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Default TextBox</RadzenText>
-            <RadzenNumeric Style="width: 100%" aria-label="longitude" @bind-Value="weatherData.longitude" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Latitude</RadzenText>
+            <RadzenNumeric Style="width: 100%" aria-label="Latitude" @bind-Value="weatherData.latitude" />
         </RadzenCard>
     </RadzenColumn>
 
-    <RadzenColumn Size="12" SizeMD="1" class="rz-mt-8 rz-mx-3">
+    <RadzenColumn Size="12" SizeMD="3">
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Longitude</RadzenText>
+            <RadzenNumeric Style="width: 100%" aria-label="Longitude" @bind-Value="weatherData.longitude" />
+        </RadzenCard>
+    </RadzenColumn>
+
+    <RadzenColumn Size="12" SizeMD="3" class="rz-mt-8 ">
+        <RadzenButton Text="Fetch Coordinate" ButtonStyle="ButtonStyle.Primary" Click="FetchCoordinates" />
+    </RadzenColumn>
+
+    <RadzenColumn Size="12" SizeMD="1" class="rz-mt-4 rz-mx-8">
         <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" Click="SaveWeatherData" />
     </RadzenColumn>
 
-    <RadzenColumn Size="12" SizeMD="1" class="rz-mt-8 rz-mx-3">
+
+    <RadzenColumn Size="12" SizeMD="1" class="rz-mt-4 rz-mx-8">
         <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Primary" Click="ClearInputs" />
     </RadzenColumn>
 
 </RadzenRow>
 
-@code{
-     private  WeatherCity weatherData = new WeatherCity();
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div style="color: red; font-weight: bold; margin-top: 10px;">
+        @errorMessage
+    </div>
+}
+
+<RadzenDataGrid Class="rz-border-primary-dark" AllowFiltering="true" AllowSorting="true" PageSize="5" AllowPaging="true" Data="@weatherDataList" TItem="City">
+    <Columns>
+        <RadzenDataGridColumn Property="cityName" Title="City Name" Width="160px" />
+        <RadzenDataGridColumn Property="latitude" Title="Latitude" Width="160px" />
+        <RadzenDataGridColumn Property="longitude" Title="Longitude" Width="160px" />
+        <RadzenDataGridColumn Title="Actions" Width="300px">
+            <Template Context="data">
+                <RadzenButton Text="Edit" ButtonStyle="ButtonStyle.Info" Click="@(() => EditCity(data.Id))" />
+                <RadzenButton Text="Delete" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteCity(data.Id))" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private City weatherData = new City();
+    private List<City> weatherDataList = new List<City>();
+    private string errorMessage = string.Empty; 
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWeatherData();
+    }
+
+    private async Task LoadWeatherData()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<List<City>>("api/WeatherCities");
+            if (response != null)
+            {
+                weatherDataList = response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception occurred while loading weather data: {ex.Message}");
+        }
+    }
+
+    private async Task FetchCoordinates()
+    {
+        if (!string.IsNullOrWhiteSpace(weatherData.cityName))
+        {
+            var apiKey = "7fae6ca41616b6453a457fff4d6e7e49"; 
+            var url = $"https://api.openweathermap.org/data/2.5/weather?q={weatherData.cityName}&appid={apiKey}&units=metric";
+
+            try
+            {
+              
+                var response = await Http.GetFromJsonAsync<WeatherResponse>(url);
+
+                if (response != null)
+                {
+                    weatherData.latitude = response.coord.lat;
+                    weatherData.longitude = response.coord.lon;
+                    errorMessage = string.Empty;
+                }
+                else
+                {
+                    errorMessage = "City not found or invalid.";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching data: {ex.Message}");
+                errorMessage = "Failed to fetch coordinates. Please check the city name.";
+            }
+        }
+        else
+        {
+            errorMessage = "Please enter a valid city name.";
+        }
+    }
+
     private async Task SaveWeatherData()
     {
         try
         {
-            Console.WriteLine($"Saving city: {weatherData.cityName}, Lat: {weatherData.latitude}, Lon: {weatherData.longitude}");
             var response = await Http.PostAsJsonAsync("api/WeatherCities", weatherData);
-
             if (response.IsSuccessStatusCode)
             {
                 Console.WriteLine("Weather data saved successfully!");
-                weatherData = new WeatherCity();
+                weatherData = new City();
+                await LoadWeatherData();
             }
             else
             {
@@ -59,8 +146,53 @@
             Console.WriteLine($"Exception occurred: {ex.Message}");
         }
     }
+
+    private async Task EditCity(int id)
+    {
+        var city = weatherDataList.FirstOrDefault(c => c.Id == id);
+        if (city != null)
+        {
+            weatherData = city;
+        }
+    }
+
+    private async Task DeleteCity(int id)
+    {
+        try
+        {
+            var response = await Http.DeleteAsync($"api/WeatherCities/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("City deleted successfully!");
+                await LoadWeatherData();
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error deleting city: {errorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception occurred while deleting city: {ex.Message}");
+        }
+    }
+
     private void ClearInputs()
     {
-        weatherData = new WeatherCity();
+        weatherData = new City();
+        errorMessage = string.Empty; 
     }
-}
+
+    public class WeatherResponse
+    {
+        public Coord coord { get; set; }
+    }
+
+    public class Coord
+    {
+        public double lat { get; set; }
+        public double lon { get; set; }
+    }
+} 
+

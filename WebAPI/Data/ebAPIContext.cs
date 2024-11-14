@@ -5,15 +5,15 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using WebAPI.Client.Models;
 
-namespace City
+namespace Weather
 {
-    public class WebAPIContext : DbContext
+    public class ebAPIContext : DbContext
     {
-        public WebAPIContext (DbContextOptions<WebAPIContext> options)
+        public ebAPIContext (DbContextOptions<ebAPIContext> options)
             : base(options)
         {
         }
 
-        public DbSet<WeatherCity> City { get; set; }
+        public DbSet<WebAPI.Client.Models.City> WeatherCity { get; set; } = default!;
     }
 }

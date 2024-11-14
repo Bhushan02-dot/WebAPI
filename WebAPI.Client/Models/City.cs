@@ -1,6 +1,6 @@
 ﻿namespace WebAPI.Client.Models
 {
-    public class WeatherCity
+    public class City
     {
         public int Id { get; set; }
         public string cityName { get; set; }

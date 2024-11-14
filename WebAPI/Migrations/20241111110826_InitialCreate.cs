@@ -11,7 +11,7 @@ namespace WebAPI.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "City",
+                name: "WeatherCity",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -22,7 +22,7 @@ namespace WebAPI.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_City", x => x.Id);
+                    table.PrimaryKey("PK_WeatherCity", x => x.Id);
                 });
         }
 
@@ -30,7 +30,7 @@ namespace WebAPI.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "City");
+                name: "WeatherCity");
         }
     }
 }

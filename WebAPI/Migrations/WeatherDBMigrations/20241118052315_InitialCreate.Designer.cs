@@ -3,14 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Weather;
 
 #nullable disable
 
-namespace WebAPI.Migrations
+namespace WebAPI.Migrations.WeatherDBMigrations
 {
-    [DbContext(typeof(ebAPIContext))]
-    [Migration("20241111110826_InitialCreate")]
+    [DbContext(typeof(WeatherDB))]
+    [Migration("20241118052315_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -19,25 +18,32 @@ namespace WebAPI.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
 
-            modelBuilder.Entity("WebAPI.Client.Models.WeatherCity", b =>
+            modelBuilder.Entity("WebAPI.Client.Models.Weather", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("WeatherId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("cityName")
+                    b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("latitude")
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Humidity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<float>("Temp")
                         .HasColumnType("REAL");
 
-                    b.Property<double>("longitude")
-                        .HasColumnType("REAL");
+                    b.HasKey("WeatherId");
 
-                    b.HasKey("Id");
-
-                    b.ToTable("WeatherCity");
+                    b.ToTable("WeatherData");
                 });
 #pragma warning restore 612, 618
         }

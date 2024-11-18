@@ -10,8 +10,8 @@ using Weather;
 namespace WebAPI.Migrations
 {
     [DbContext(typeof(ebAPIContext))]
-    [Migration("20241113065917_weatheCity")]
-    partial class weatheCity
+    [Migration("20241118052055_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
